@@ -9,3 +9,5 @@
 
 - [运行时数据区](https://github.com/jackhusky/jvm/blob/main/docs/运行时数据区.md)
 
+- [本地方法接口](https://github.com/jackhusky/jvm/blob/main/docs/本地方法接口.md)
+
