@@ -13,3 +13,5 @@
 
 - [对象的实例化内存布局访问定位](https://github.com/jackhusky/jvm/blob/main/docs/对象的实例化内存布局访问定位.md)
 
+- [直接内存](https://github.com/jackhusky/jvm/blob/main/docs/直接内存.md)
+
