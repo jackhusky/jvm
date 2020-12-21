@@ -11,3 +11,5 @@
 
 - [本地方法接口](https://github.com/jackhusky/jvm/blob/main/docs/本地方法接口.md)
 
+- [对象的实例化内存布局访问定位](https://github.com/jackhusky/jvm/blob/main/docs/对象的实例化内存布局访问定位.md)
+
