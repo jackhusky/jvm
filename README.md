@@ -17,3 +17,5 @@
 
 - [执行引擎](https://github.com/jackhusky/jvm/blob/main/docs/执行引擎.md)
 
+- [String类](https://github.com/jackhusky/jvm/blob/main/docs/String类.md)
+
