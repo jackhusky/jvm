@@ -199,13 +199,21 @@ JDK7/8：
 
 ## G1中的String去重操作
 
+Java堆中存活的数据集合差不多25%是`String`对象，这里面差不多一半`String`对象是重复的。`str1.equals(str2)=true`。堆上存在重复的`String`对象必然是一种内存的浪费。
 
+实现：
 
+- 当垃圾收集器工作的时候，会访问堆上存活的对象。对每一个访问的对象都会检查是否是候选的要去重的`String`对象。
 
+- 使用hashtable记录所有的被`String`对象使用的不重复的`char`数组。去重的时候会查这个`hashtable`，来看堆上是否存在一个一样的`char`数组。
 
+- 如果存在`String`对象会被调整引用那个数组，释放原来的数组的引用，最终会被垃圾收集器回收掉。
+- 不存在，`char`数组会被插入到`hashtable`，这样以后就可以共享这个数组了。
 
-
-
+- 命令行选项
+  - `UseStringDeduplication`：开启String去重，默认不开启。
+  - `PrintStringDeduplicationStatistics`：打印详细的去重统计信息。
+  - `StringDeduplicationAgeThreshold`：达到这个年龄的`String`对象被认为是去重的候选对象。
 
 
 
