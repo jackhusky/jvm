@@ -19,3 +19,4 @@
 
 - [String类](https://github.com/jackhusky/jvm/blob/main/docs/String类.md)
 
+- [垃圾回收](https://github.com/jackhusky/jvm/blob/main/docs/垃圾回收.md)
