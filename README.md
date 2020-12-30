@@ -3,20 +3,27 @@
 
 ![jvm整体结构](https://github.com/jackhusky/jvm/blob/main/docs/images/jvm整体结构.png)
 
-## 清单
+## 内存与垃圾回收
 
-- [类加载子系统](https://github.com/jackhusky/jvm/blob/main/docs/类加载子系统.md)
+- [类加载子系统](https://github.com/jackhusky/jvm/blob/main/docs/内存与垃圾回收/类加载子系统.md)
 
-- [运行时数据区](https://github.com/jackhusky/jvm/blob/main/docs/运行时数据区.md)
+- [运行时数据区](https://github.com/jackhusky/jvm/blob/main/docs/内存与垃圾回收/运行时数据区.md)
 
-- [本地方法接口](https://github.com/jackhusky/jvm/blob/main/docs/本地方法接口.md)
+- [本地方法接口](https://github.com/jackhusky/jvm/blob/main/docs/内存与垃圾回收/本地方法接口.md)
 
-- [对象的实例化内存布局访问定位](https://github.com/jackhusky/jvm/blob/main/docs/对象的实例化内存布局访问定位.md)
+- [对象的实例化内存布局访问定位](https://github.com/jackhusky/jvm/blob/main/docs/内存与垃圾回收/对象的实例化内存布局访问定位.md)
 
-- [直接内存](https://github.com/jackhusky/jvm/blob/main/docs/直接内存.md)
+- [直接内存](https://github.com/jackhusky/jvm/blob/main/docs/内存与垃圾回收/直接内存.md)
 
-- [执行引擎](https://github.com/jackhusky/jvm/blob/main/docs/执行引擎.md)
+- [执行引擎](https://github.com/jackhusky/jvm/blob/main/docs/内存与垃圾回收/执行引擎.md)
 
-- [String类](https://github.com/jackhusky/jvm/blob/main/docs/String类.md)
+- [String类](https://github.com/jackhusky/jvm/blob/main/docs/内存与垃圾回收/String类.md)
 
-- [垃圾回收](https://github.com/jackhusky/jvm/blob/main/docs/垃圾回收.md)
+- [垃圾回收](https://github.com/jackhusky/jvm/blob/main/docs/内存与垃圾回收/垃圾回收.md)
+
+## 字节码与类的加载
+
+- [Class文件结构](https://github.com/jackhusky/jvm/blob/main/docs/字节码与类的加载/Class文件结构.md)
+- [字节码指令集与解析举例](https://github.com/jackhusky/jvm/blob/main/docs/字节码与类的加载/字节码指令集与解析举例.md)
+- [类的加载过程详解](https://github.com/jackhusky/jvm/blob/main/docs/字节码与类的加载/类的加载过程详解.md)
+- [再谈类的加载](https://github.com/jackhusky/jvm/blob/main/docs/字节码与类的加载/再谈类的加载.md)
