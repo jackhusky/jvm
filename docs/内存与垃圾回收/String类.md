@@ -105,7 +105,7 @@ StringBuilder s = new StringBuilder(highLevl);
 
 ## intern()的使用
 
-如果不是用双引号声明的String对象，可以使用`String`提供的`intern()`方法，`intern()`方法会从字符串常量池中查询当前字符串是否存在，若不存在就会将当前字符串放入常量池中。
+如果不是用双引号声明的`String`对象，可以使用`String`提供的`intern()`方法，`intern()`方法会从字符串常量池中查询当前字符串是否存在，若不存在就会将当前字符串放入常量池中。
 
 ```java
 String s = new String("abc").intern();
@@ -117,11 +117,11 @@ String s = new String("abc").intern();
 ("a" + "b" + "c").intern() == "abc"
 ```
 
-确保字符串在内存中只有一份拷贝，这样可以节约内存空间，加块字符串操作任务的执行速度。注意，这个值会被存放在字符串常量池。
+确保字符串在内存中只有一份拷贝，这样可以节约内存空间，加快字符串操作任务的执行速度。注意，这个值会被存放在字符串常量池。
 
 题目：`new String(“ab”)`会创建几个对象？两个
 
-一个对象是：new关键字在堆空间创建的。
+一个对象是：`new`关键字在堆空间创建的。
 
 一个对象是：字符串常量池中的对象“ab”。字节码指令：`ldc`
 
@@ -144,7 +144,7 @@ String s = new String("abc").intern();
 ```java
 public static void main(String[] args) {
     String s = new String("1");
-    // 调用此方法之前，字符串常量池中已经存在了”1“
+    // 调用此方法之前，字符串常量池中已经存在了"1"
     s.intern();
     String s2 = "1";
     System.out.println(s == s2); // jdk6:false jdk7/8:false
@@ -188,7 +188,14 @@ JDK7/8：
 ![练习1jdk8intern变形](https://github.com/jackhusky/jvm/blob/main/docs/images/练习1jdk8intern变形.png)
 
 ```java
-@Test    public void test5(){//        String s1 = new String("ab"); //会在字符串常量池中生成"ab" false        String s1 = new String("a") + new String("b"); //不会在字符串常量池中生成"ab" true        s1.intern();        String s2 = "ab";        System.out.println(s1 == s2);    }
+    @Test
+    public void test5(){
+		//String s1 = new String("ab"); //会在字符串常量池中生成"ab" false
+        String s1 = new String("a") + new String("b"); //不会在字符串常量池中生成"ab" true
+        s1.intern();
+        String s2 = "ab";
+        System.out.println(s1 == s2);
+    }
 ```
 
 效率测试：对于程序中大量存在的字符串，尤其存在很多重复的字符串，使用intern()可以节省内存空间。
