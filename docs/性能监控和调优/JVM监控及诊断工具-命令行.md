@@ -38,7 +38,9 @@ jstat（JVM Statistics Monitoring Tool）是用于监视虚拟机各种运行状
 
 ### 基本语法
 
+```shell
 jstat -<option> [-t] [-h<lines>] <vmid> [<interval> [<count>]]
+```
 
 #### option参数
 
