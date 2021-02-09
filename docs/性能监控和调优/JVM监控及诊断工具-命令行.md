@@ -12,7 +12,9 @@ jps（Java Process Status）：显示指定系统内所有的HotSpot虚拟机进
 
 ### 基本语法
 
+```shell
 jps [options] [hostid]
+```
 
 #### options参数
 
@@ -86,3 +88,115 @@ jstat还可以用来判断是否出现内存泄漏
 第1步：在长时间运行的Java程序中，我们可以运行jstat命令连续获取多行性能数据，并取这几行数据中OU列（即已占用的老年代内存）的最小值。
 
 第2步：然后，我们每隔一段较长的时间重复一次上述操作，来获得多组OU最小值。如果这些值成上涨趋势，则说明该Java程序的老年代内存已使用量在不断上涨，这意味着无法回收的对象在不断增加，因此很有可能存在内存泄漏。
+
+## jinfo：实时查看和修改JVM配置参数
+
+jinfo（Configuration Info for Java）查看虚拟机配置参数信息，也可用于调整虚拟机的配置参数。
+
+### 基本语法
+
+```shell
+jinfo [options] pid #java进程ID必须要加上
+```
+
+[options]：
+
+| 选项             | 选项说明                                                     |
+| ---------------- | ------------------------------------------------------------ |
+| no option        | 输出全部的参数和系统属性                                     |
+| -flag name       | 输出对应名称的参数                                           |
+| -flag [+-] name  | 开启或者关闭对应名称的参数，只有被标记为manageable的参数才可以被动态修改 |
+| -flag name=value | 设定对应名的参数                                             |
+| -flags           | 输出全部的参数                                               |
+| -sysprops        | 输出系统属性                                                 |
+
+#### 查看：
+
+jinfo -sysprops PID：可以查看由System.getProperties()取得的参数
+
+jinfo -flags PID：查看曾经赋过值的一些参数
+
+jinfo -flag 具体参数 PID：查看某个java进程的具体参数的值
+
+#### 修改：
+
+jinfo不仅可以查看运行时某一个Java虚拟机参数的实际取值，甚至可以在运行时修改部分参数，并使之立即生效。
+
+但是，并非所有参数都支持动态修改。参数只有被标记为manageable的flag可以被实时修改。其实，这个修改能力是极其有限的。
+
+```shell
+# 可以查看被标记为manageable的参数
+java -XX:+PrintFlagsFinal -version | grep manageable
+```
+
+针对boolean类型：jinfo -flag [+|-]具体参数 PID
+
+针对非boolean类型：jinfo -flag 具体参数=具体参数值 PID
+
+### 拓展
+
+java -XX:+printFlagsInitial：查看所有JVM参数启动的初始值
+
+java -XX:+PrintFlagsFinal：查看所有JVM参数的最终值
+
+java -XX:+PrintommandLineFlags：查看那些已经被用户或者JVM设置过的详细的XX参数的名称和值
+
+## jmap：导出内存映像文件&内存使用情况
+
+jmap（JVM Memory Map）：作用一方面是获取dump文件（堆转储快照文件，二进制文件），它还可以获取目标Java进程的内存相关信息，包括Java堆各区域的使用情况、堆中对象的统计信息、类加载信息等。
+
+### 基本语法
+
+```shell
+jmap [option] <pid>
+jmap [option] <executable <core>
+jmap [option] [server_id@]<remote server IP or hostname>
+```
+
+其中option包括：
+
+| 选项           | 作用                                                         |
+| -------------- | ------------------------------------------------------------ |
+| -dump          | 生成dump文件                                                 |
+| -finalizerinfo | 以ClassLoader为统计口径输出永久代的内存状态信息              |
+| -heap          | 输出整个堆空间的详细信息，包括GC的使用、堆配置信息，以及内存的使用信息等 |
+| -histo         | 输出堆空间中对象的统计信息，包括类、实例数量和合计容量       |
+| -permstat      | 以ClassLoader为统计口径输出永久代的内存状态信息              |
+| -F             | 当虚拟机进程对-dump选项没有任何响应时，强制执行生成dump文件  |
+
+-dump：
+
+- 生成Java堆转储快照：dump文件
+- 特别的：-dump:live只保存堆中的存活对象
+
+-heap：
+
+- 输出整个堆空间的详细信息，包括GC的使用、堆配置信息，以及内存的使用等
+
+-histo：
+
+- 输出堆中对象的统计信息，包括类、实例数量和合计容量
+- 特别的：histo:live只统计堆中的存活对象
+
+-permstat
+
+- 以ClassLoader为统计口径输出永久代的内存状态信息
+- 仅linux/solaris平台有效
+
+-finalizerinfo：
+
+- 显示在F-Queue中等待Finalizer线程执行finalize方法的对象
+- 仅linux/solaris平台有效
+
+-F：
+
+- 当虚拟机进程对-dump选项没有任何响应时，可使用此选项强制执行生成dump文件
+- 仅linux/solaris平台有效
+
+-h|-help：
+
+- jmap工具使用的帮助命令
+
+`-J <FLAG>`
+
+- 传递参数给jmap启动的jvm
