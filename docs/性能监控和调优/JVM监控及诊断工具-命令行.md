@@ -200,3 +200,112 @@ jmap [option] [server_id@]<remote server IP or hostname>
 `-J <FLAG>`
 
 - 传递参数给jmap启动的jvm
+
+### 使用1：导出内存映像文件
+
+#### 手动的方式
+
+```bash
+jmap -dump:format=b,file=<filename.hprof> <pid>
+# live子参数只dump出存活的对象
+jmap -dump:live,format=b,file=<filename.hprof> <pid>
+```
+
+#### 自动的方式
+
+```bash
+# 在程序发生OOM时，导出应用程序的当前堆快照
+-XX:+HeapDumpOnOutOfMemoryError
+# 指定堆快照的保存位置
+-XX:HempDumpPath
+```
+
+### 使用2：显示退内存相关信息
+
+```bash
+jmap -heap pid
+jmap -histo pid
+```
+
+### 使用3：其他作用
+
+~~~bash
+# 查看系统的ClassLoader信息
+jmap -permstat pid
+# 查看堆积在finalizer队列中的对象
+jmap -finalizerinfo
+~~~
+
+## jhat：JDK自带堆分析工具
+
+### 基本情况
+
+jhat（JVM Heap Analysis Tool）：与jmap命令搭配使用，用于分析jmap生成的heap dump文件（堆转储快照）。jhat内置了一个微型的HTTP/HTML服务器，生成dump文件的分析结果后，用户可以在浏览器中查看分析结果（分析虚拟机转储快照信息）。
+
+使用了jhat命令，就启动了一个http服务，端口是7000，即http://localhost:7000/，就可以在浏览器里分析。
+
+说明：jhat命令在JDK9、JDK10中已经被删除，官方建议用VisualVM代替。
+
+### 基本语法
+
+~~~bash
+jhat [option] xxx.hrof
+~~~
+
+## jstack：打印JVM中线程快照
+
+### 基本情况
+
+jstack（Stack Trace for Java）命令用于生成虚拟机当前时刻的线程快照（一般称为threaddump或者
+javacore文件）。线程快照就是当前虚拟机内每一条线程正在执行的方法堆栈的集合。
+
+生成线程快照的作用：可用于定位线程出现长时间停顿的原因，如线程间死锁、死循环、请求外部资源导致的长时间挂起等，都是导致线程长时间停顿的常见原因。当线程出现停顿时，就可以使用jstack显示各个线程调用的堆栈情况。
+
+在thread dump中，要留意下面几种状态
+
+- 死锁，Deadlock（重点关注）
+- 等待资源，Waiting on Condition（重点关注）
+- 等待获取监视器，Waiting on monitor entry（重点关注）
+- 阻塞，Blocked（重点关注）
+- 执行中，Runnable
+- 暂停，Suspended
+- 对象等待中，Object.wait() 或 TIMED_WAITING
+- 停止，Parked
+
+### 基本语法
+
+~~~bash
+jstack option pid
+~~~
+
+| option参数 | 作用                                         |
+| ---------- | -------------------------------------------- |
+| -F         | 当正常输出的请求不被响应时，强制输出线程堆栈 |
+| -l         | 除堆栈外，显示关于锁的附加信息               |
+| -m         | 如果调用本地方法的话，可以显示C/C++的堆栈    |
+| -h         | 帮助                                         |
+
+## jcmd：多功能命令行
+
+### 基本情况
+
+在JDK1.7以后，新增了一个命令行工具jcmd。
+
+它是一个多功能的工具，可以用来实现前面除了jstat之外所有命令的功能。jcmd拥有jmap的大部分功能，并且Oracle的官方网站上也推荐使用jcmd命令代替jmap命令。
+
+### 基本语法
+
+~~~bash
+# 列出所有的JVM进程
+jcmd -l
+# 针对指定的进程，列出支持的所有命令
+jcmd pid help
+# 显示指定进程的指令命令的数据
+jcmd pid 具体命令
+~~~
+
+## jstatd：远程主机信息收集
+
+之前的指令只涉及到监控本机的Java应用程序，而这些工具中，一些监控工具也支持对远程计算机的监控（如jps、jstat）。为了启用远程监控，则需要配合使用jstatd工具。
+
+命令jstatd是一个RMI服务端程序，它的作用相当于代理服务器，建立本地计算机与远程监控工具的通信。jstatd服务器将本地的Java应用程序信息传递到远程计算机。
