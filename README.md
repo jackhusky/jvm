@@ -36,3 +36,4 @@
 - [概述](https://github.com/jackhusky/jvm/blob/main/docs/性能监控和调优/概述.md)
 - [JVM监控及诊断工具-命令行](https://github.com/jackhusky/jvm/blob/main/docs/性能监控和调优/JVM监控及诊断工具-命令行.md)
 
+- [JVM监控及诊断工具-GUI](https://github.com/jackhusky/jvm/blob/main/docs/性能监控和调优/JVM监控及诊断工具-GUI.md)
