@@ -139,13 +139,273 @@ MAT的直方图和jmap的-histo子命令一样，都能够展示各个类的实�
 
 ![深堆和浅堆](https://github.com/jackhusky/jvm/blob/main/docs/images/深堆和浅堆.png)
 
- 
-
 #### 支配树
 
+支配树（Dominator Tree）的概念源自图论。
+
+MAT提供了一个称为支配树的对象图。支配树体现了对象实例间的支配关系。在对象引用图中，所有指向对象B的路径都经过对象A，则认为对象A支配对象B。如果对象A是离对象B最近的一个支配对象，则认为对象A为对象B的直接支配者。支配树是基于对象间的引用图所建立的，它有一下基本性质：
+
+- 对象A的子树（所有被对象A支配的对象集合）表示对象A的保留集，即深堆。
+- 如果对象A支持对象B，那么对象A的直接支配者也支配对象B。
+- 支配树的边与对象引用图的边不直接对应。
+
+如下图所示：左图表示对象引用图，右图表示左图对应的支配树。
+
+![支配树](https://github.com/jackhusky/jvm/blob/main/docs/images/支配树.png)
+
+## 再谈内存泄漏
+
+### 内存泄漏的理解和分类
+
+#### 内存泄漏（memory leak）的理解
+
+严格来说，只有对象不会再被程序用到了，但是GC又不能回收它们的情况，才叫内存泄漏。
+
+但实际情况很多时候一些不太好的实践（或疏忽）会导致对象的生命周期变得很长甚至导致OOM，也可以叫做宽泛意义上的内存泄漏。
+
+对象A引用对象Y，X的生命周期比Y的生命周期长。那么当Y生命周期结束的时候，X依然引用着Y，这时候，垃圾回收器不会回收对象Y的。
+
+#### 内存泄漏和内存溢出的关系
+
+1. 内存泄漏
+
+   申请了内存用完了不释放，比如一共有1G的内存，分配了512M的内存一直不回收，那么可以用的内存只有512M了，仿佛泄漏掉了一部分。
+
+2. 内存溢出
+
+   申请内存时，没有足够的内存可以使用。
+
+可见，内存泄漏和内存溢出的关系：内存泄漏的增多，最终导致内存溢出。
+
+#### 泄漏的分类
+
+经常发生：发生内存泄漏的代码会多次执行，每次执行，泄漏一块内存。
+
+偶然发生：在某些特定情况下才会发生。
+
+一次性：发生内存泄漏的方法只会执行一次。
+
+隐式泄漏：一直占着内存不释放，知道执行结束；严格的说这个不算内存泄漏，因为最终释放掉了，但是如果执行时间特别长，也可能导致内存耗尽。
+
+### Java中内存泄漏的8种情况
+
+1. 静态集合类
+
+   如HashMap、LinkedList等。如果这些容器是静态的,那么它们的生命周期与JVM程序一致，则容器中的对象在程序结束之前将不能被释放，从而造成内存泄漏。简而言之，长生命周期的对象持有短生命周期的对象引用，尽管短生命周期的对象不再使用，但是因为长生命周期对象持有它的引用而导致不能被回收。
+
+~~~java
+public class MemoryLeak {
+
+    static List list = new ArrayList();
+
+    public static void method(){
+        Object o = new Object();
+        list.add(o);
+    }
+}
+~~~
+
+2. 单例模式、
+
+   和静态集合导致内存泄漏的原因类似，因为单例的静态特性，它的生命周期和JVM的生命周期一样长，所以如果单例对象如果持有外部对象的引用，那么这个外部对象也不会被回收，那么就会造成内存泄漏。
+
+3. 内部类持有外部类
+
+   如果一个外部类的实例对象的方法返回了一个内部类的实例对象。这个内部类对象被长期使用了， 即使那个外部类实例对象不再被使用，但由于内部类持有外部类的实例对象，这个外部类对象将不会被垃圾回收，这也会造成内存泄露。
+
+4. 各种连接，如数据库连接、网络连接和IO连接等
+
+   在对数据库进行操作的过程中，首先需要建立与数据库的连接，当不再使用时，需要调用close方法来释放与数据库的连接。只有连接被关闭后，垃圾回收器才会回收对应的对象。否则，如果在访问数据库的过程中，对Connection、Statement或ResultSet不显性地关闭，将会造成大量的对象无法被回收，从而引起内存泄漏。
+
+~~~java
+public static void main(String[] args) {
+        try {
+            Connection connection = null;
+            Class.forName("com.mysql.jdbc.Driver");
+            connection = DriverManager.getConnection("", "", "");
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        } finally {
+            // 1.关闭结果集statement
+            // 2.关闭声明的对象resultSet
+            // 3.关闭连接 connection
+        }
+    }
+~~~
+
+5. 变量不合理的作用域
+
+   一般而言，一个变量的定义的作用范围大于其使用范围，很有可能会造成内存泄漏。另一方面，如果没有及时地把对象设置为null，很有可能导致内存泄漏的发生。
+
+~~~java
+public class UsingRandom {
+
+    private String msg;
+
+    public void receiveMsg(){
+
+        readFromNet();// 从网络中接受数据保存到msg中
+        saveDB();// 把msg保存到数据库中
+    }
+}
+~~~
+
+如上面这个伪代码，通过readFromNet方法把接受的消息保存在变量msg中，然后调用saveDB方法把msg的内容保存到数据库中，此时msg已经就没用了，由于msg的生命周期与对象的生命周期相同，此时msg还不能回收，因此造成了内存泄漏。
+
+实际上这个msg变量可以放在receiveMsg方法内部，当方法使用完，那么msg的生命周期也就结束，此时就可以回收了。还有一种方法，在使用完msg后，把msg设置为null，这样垃圾回收器也会回收msg的内存空间。
+
+6. 改变哈希值
+
+   当一个对象被存储进HashSet集合中以后，就不能修改这个对象中的那些参与计算哈希值的字段了。否则，对象修改后的哈希值与最初存储进HashSet集合中时的哈希值就不同了，在这种情况下， 即使在contains方法使用该对象的当前饮用作为的参数去HashSet集合中检索对象，也将返回找不到对象的结果，这也会导致无法从HashSet集合中单独删除当前对象，造成内存泄漏。
+
+7. 缓存泄漏
+
+   内存泄漏的另一个常见来源是缓存，一旦你把对象引用放入到缓存中，他就很容易遗忘，对于这个问题，可以使用WeakHashMap代表缓存，此种Map的特点是，当除了自身有对key的引用外，此key没有其他引用那么此map会自动丢弃此值
+
+~~~java
+public class MapTest {
+    static Map wMap = new WeakHashMap();
+    static Map map = new HashMap();
+    public static void main(String[] args) {
+        init();
+        testWeakHashMap();
+        testHashMap();
+    }
+
+    public static void init(){
+        String ref1= new String("obejct1");
+        String ref2 = new String("obejct2");
+        String ref3 = new String ("obejct3");
+        String ref4 = new String ("obejct4");
+        wMap.put(ref1, "chaheObject1");
+        wMap.put(ref2, "chaheObject2");
+        map.put(ref3, "chaheObject3");
+        map.put(ref4, "chaheObject4");
+        System.out.println("String引用ref1，ref2，ref3，ref4 消失");
+
+    }
+    public static void testWeakHashMap(){
+
+        System.out.println("WeakHashMap GC之前");
+        for (Object o : wMap.entrySet()) {
+            System.out.println(o);
+        }
+        try {
+            System.gc();
+            TimeUnit.SECONDS.sleep(20);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        System.out.println("WeakHashMap GC之后");
+        for (Object o : wMap.entrySet()) {
+            System.out.println(o);
+        }
+    }
+    public static void testHashMap(){
+        System.out.println("HashMap GC之前");
+        for (Object o : map.entrySet()) {
+            System.out.println(o);
+        }
+        try {
+            System.gc();
+            TimeUnit.SECONDS.sleep(20);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        System.out.println("HashMap GC之后");
+        for (Object o : map.entrySet()) {
+            System.out.println(o);
+        }
+    }
+
+}
+/** 结果
+ String引用ref1，ref2，ref3，ref4 消失
+ WeakHashMap GC之前
+ obejct2=chaheObject2
+ obejct1=chaheObject1
+ WeakHashMap GC之后
+ HashMap GC之前
+ obejct4=chaheObject4
+ obejct3=chaheObject3
+ Disconnected from the target VM, address: '127.0.0.1:51628', transport: 'socket'
+ HashMap GC之后
+ obejct4=chaheObject4
+ obejct3=chaheObject3
+ **/
+~~~
+
+8. 监听器和回调
+
+   内存泄漏另一个常见来源是监听器和其他回调，如果客户端在你实现的API中注册回调，却没有显示的取消，那么就会积聚。需要确保回调立即被当作垃圾回收的最佳方法是只保存他的若引用，例如将他们保存成为WeakHashMap中的键。
+
+### 内存泄漏案例分析
+
+~~~java
+
+import java.util.Arrays;
+import java.util.EmptyStackException;
+
+public class Stack {
+    private Object[] elements;
+    private int size = 0;
+    private static final int DEFAULT_INITIAL_CAPACITY = 16;
+
+    public Stack() {
+        elements = new Object[DEFAULT_INITIAL_CAPACITY];
+    }
+
+    public void push(Object e) {
+        ensureCapacity();
+        elements[size++] = e;
+    }
+
+    public Object pop() {
+        if (size == 0)
+            throw new EmptyStackException();
+        return elements[--size];
+    }
+
+    private void ensureCapacity() {
+        if (elements.length == size)
+            elements = Arrays.copyOf(elements, 2 * size + 1);
+    }
+}
+~~~
+
+上述程序并没有明显的错误，但是这段程序有一个内存泄漏，随着GC活动的增加，或者内存占用的不断增加，程序性能的降低就会表现出来，严重时可导致内存泄漏，但是这种失败情况相对较少。代码的主要问题在pop函数，下面通过这张图示展现
+假设这个栈一直增长，增长后如下图所示
+
+![内存泄漏案例图1](https://github.com/jackhusky/jvm/blob/main/docs/images/内存泄漏案例图1.jpg)
+
+当进行大量的pop操作时，由于引用未进行置空，gc是不会释放的，如下图所示
+
+![内存泄漏案例图2](https://github.com/jackhusky/jvm/blob/main/docs/images/内存泄漏案例图2.jpg)
+
+解决方法：
+
+~~~java
+public Object pop() {
+    if (size == 0)
+    throw new EmptyStackException();
+    Object result = elements[--size];
+    elements[size] = null;
+    return result;
+}
+~~~
+
+一旦引用过期，清空这些引用，将引用置空。
+
+![内存泄漏案例图3](https://github.com/jackhusky/jvm/blob/main/docs/images/内存泄漏案例图3.jpg)
+
+## 支持使用OQL语言查询对象信息
 
 
 
-
-
-
+## JProfiler 
